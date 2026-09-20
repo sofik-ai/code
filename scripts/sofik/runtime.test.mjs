@@ -9,15 +9,24 @@ import path from 'node:path';
 import { createMessageConnection, StreamMessageReader, StreamMessageWriter } from '../../extensions/sofik-runtime/node_modules/vscode-jsonrpc/node.js';
 import pty from 'node-pty';
 
-test('native terminal runs a command and reports its exit status', { timeout: 10000 }, async t => {
-	const terminal = pty.spawn(process.execPath, ['-e', 'console.log("sofik-terminal-ok")'], { name: 'xterm-256color', cols: 80, rows: 24, cwd: os.tmpdir(), env: process.env });
+test('native terminal accepts input and reports its exit status', { timeout: 30000 }, async t => {
+	// Keep the child alive until the parent has actually received its output.
+	// A one-shot process can exit before ConPTY delivers its first screen update.
+	const script = `process.stdin.setRawMode(true); process.stdin.on('data', data => { if (data.includes(113)) process.exit(0); else console.log('sofik-terminal-ok'); }); console.log('sofik-terminal-ready');`;
+	const terminal = pty.spawn(process.execPath, ['-e', script], { name: 'xterm-256color', cols: 100, rows: 24, cwd: os.tmpdir(), env: process.env });
 	// ConPTY keeps a worker alive after shell exit until the terminal is disposed.
 	t.after(() => { try { terminal.kill(); } catch (error) { if (error.code !== 'ESRCH') { throw error; } } });
-	let output = '';
-	const result = await new Promise(resolve => { terminal.onData(data => { output += data; }); terminal.onExit(resolve); });
-	// Windows also emits OSC window-title and cursor-control sequences.
-	assert.match(output, /sofik-terminal-ok/);
-	assert.equal(result.exitCode, 0);
+	let output = '', sentInput = false, sentExit = false;
+	const result = await new Promise(resolve => {
+		terminal.onData(data => {
+			output += data;
+			if (!sentInput && output.includes('sofik-terminal-ready')) { sentInput = true; terminal.write('x'); }
+			if (!sentExit && output.includes('sofik-terminal-ok')) { sentExit = true; terminal.write('q'); }
+		});
+		terminal.onExit(resolve);
+	});
+	assert.equal(result.exitCode, 0, `Terminal exited unexpectedly: ${output}`);
+	assert.equal(sentInput && sentExit, true, `Terminal did not complete the input/output handshake: ${output}`);
 });
 
 test('bundled JSON LSP provides schema autocomplete over stdio', { timeout: 10000 }, async t => {
