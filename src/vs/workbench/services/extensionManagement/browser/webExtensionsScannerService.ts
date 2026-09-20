@@ -467,6 +467,8 @@ export class WebExtensionsScannerService extends Disposable implements IWebExten
 	}
 
 	async scanUserExtensions(profileLocation: URI, scanOptions?: ScanOptions): Promise<IScannedExtension[]> {
+		if (this.productService.applicationName === 'sofik-code') { return []; }
+
 		const extensions = new Map<string, IScannedExtension>();
 
 		// Custom builtin extensions defined through `additionalBuiltinExtensions` API
@@ -485,6 +487,8 @@ export class WebExtensionsScannerService extends Disposable implements IWebExten
 	}
 
 	async scanExtensionsUnderDevelopment(): Promise<IExtension[]> {
+		if (this.productService.applicationName === 'sofik-code') { return []; }
+
 		const devExtensions = this.environmentService.options?.developmentOptions?.extensions;
 		const result: IExtension[] = [];
 		if (Array.isArray(devExtensions)) {

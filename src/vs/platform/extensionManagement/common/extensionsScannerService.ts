@@ -228,6 +228,8 @@ export abstract class AbstractExtensionsScannerService extends Disposable implem
 	}
 
 	async scanUserExtensions(scanOptions: UserExtensionsScanOptions): Promise<IScannedExtension[]> {
+		if (this.productService.applicationName === 'sofik-code') { return []; }
+
 		this.logService.trace('Started scanning user extensions', scanOptions.profileLocation);
 		const profileScanOptions: IProfileExtensionsScanOptions | undefined = this.uriIdentityService.extUri.isEqual(scanOptions.profileLocation, this.userDataProfilesService.defaultProfile.extensionsResource) ? { bailOutWhenFileNotFound: true } : undefined;
 		const extensionsScannerInput = await this.createExtensionScannerInput(scanOptions.profileLocation, true, ExtensionType.User, scanOptions.language, true, profileScanOptions, scanOptions.productVersion ?? this.getProductVersion());
@@ -249,12 +251,16 @@ export abstract class AbstractExtensionsScannerService extends Disposable implem
 	}
 
 	async scanAllUserExtensions(scanOptions: { includeAllVersions?: boolean; includeInvalid: boolean } = { includeInvalid: true, includeAllVersions: true }): Promise<IScannedExtension[]> {
+		if (this.productService.applicationName === 'sofik-code') { return []; }
+
 		const extensionsScannerInput = await this.createExtensionScannerInput(this.userExtensionsLocation, false, ExtensionType.User, undefined, true, undefined, this.getProductVersion());
 		const extensions = await this.extensionsScanner.scanExtensions(extensionsScannerInput);
 		return this.applyScanOptions(extensions, ExtensionType.User, { includeAllVersions: scanOptions.includeAllVersions, includeInvalid: scanOptions.includeInvalid });
 	}
 
 	async scanExtensionsUnderDevelopment(existingExtensions: IScannedExtension[], scanOptions: ScanOptions): Promise<IScannedExtension[]> {
+		if (this.productService.applicationName === 'sofik-code') { return []; }
+
 		if (this.environmentService.isExtensionDevelopment && this.environmentService.extensionDevelopmentLocationURI) {
 			const extensions = (await Promise.all(this.environmentService.extensionDevelopmentLocationURI.filter(extLoc => extLoc.scheme === Schemas.file)
 				.map(async extensionDevelopmentLocationURI => {

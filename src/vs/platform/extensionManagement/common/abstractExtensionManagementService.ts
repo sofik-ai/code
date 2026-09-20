@@ -162,6 +162,8 @@ export abstract class AbstractExtensionManagementService extends CommontExtensio
 	}
 
 	async installFromGallery(extension: IGalleryExtension, options: InstallOptions = {}): Promise<ILocalExtension> {
+		if (this.productService.applicationName === 'sofik-code') { throw new Error("Sofik Code does not support installing extensions."); }
+
 		try {
 			const results = await this.installGalleryExtensions([{ extension, options }]);
 			const result = results.find(({ identifier }) => areSameExtensions(identifier, extension.identifier));
@@ -187,6 +189,8 @@ export abstract class AbstractExtensionManagementService extends CommontExtensio
 	}
 
 	async installGalleryExtensions(extensions: InstallExtensionInfo[]): Promise<InstallExtensionResult[]> {
+		if (this.productService.applicationName === 'sofik-code') { throw new Error("Sofik Code does not support installing extensions."); }
+
 		if (!this.galleryService.isEnabled()) {
 			throw new ExtensionManagementError(nls.localize('MarketPlaceDisabled', "Marketplace is not enabled"), ExtensionManagementErrorCode.NotAllowed);
 		}

@@ -1,0 +1,26 @@
+{
+  "name": "theme-github",
+  "displayName": "GitHub Themes",
+  "publisher": "sofik",
+  "version": "6.3.5",
+  "license": "MIT",
+  "engines": {
+    "vscode": "*"
+  },
+  "contributes": {
+    "themes": [
+      {
+        "id": "GitHub Dark",
+        "label": "GitHub Dark",
+        "uiTheme": "vs-dark",
+        "path": "./dark.json"
+      },
+      {
+        "id": "GitHub Light",
+        "label": "GitHub Light",
+        "uiTheme": "vs",
+        "path": "./light.json"
+      }
+    ]
+  }
+}

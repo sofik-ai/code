@@ -1,76 +1,68 @@
-# Visual Studio Code - Open Source ("Code - OSS")
-[![Feature Requests](https://img.shields.io/github/issues/microsoft/vscode/feature-request.svg)](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
-[![Bugs](https://img.shields.io/github/issues/microsoft/vscode/bug.svg)](https://github.com/microsoft/vscode/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
+# Sofik Code
 
-## The Repository
+A focused, local Code OSS workbench for Sofik. This is an independent product based on the fixed **Code OSS 1.138.0** snapshot, not a rolling upstream fork. Its exact source revision is in [sofik/upstream.json](sofik/upstream.json).
 
-This repository ("`Code - OSS`") is where we (Microsoft) develop the [Visual Studio Code](https://code.visualstudio.com) product together with the community. Not only do we work on code and issues here, but we also publish our [roadmap](https://github.com/microsoft/vscode/wiki/Roadmap), [monthly iteration plans](https://github.com/microsoft/vscode/wiki/Iteration-Plans), and our [endgame plans](https://github.com/microsoft/vscode/wiki/Running-the-Endgame). This source code is available to everyone under the standard [MIT license](https://github.com/microsoft/vscode/blob/main/LICENSE.txt).
+## Product
 
-## Visual Studio Code
+- Code OSS editing, explorer, search, Git/diffs, diagnostics, navigation and autocomplete.
+- Native terminal backed by `node-pty` and xterm.
+- Bundled TypeScript/JavaScript, JSON, HTML, CSS and other upstream language components; configurable external language servers over stdio/LSP.
+- Agent Client Protocol over stdio: initialize, session creation, streaming response, explicit permission choices, cancellation and workspace file callbacks.
+- GitHub Dark and GitHub Light, generated from the original MIT-licensed GitHub theme sources. Credits are in `extensions/theme-github/NOTICE.md`.
+- Five preferences through **Preferences** (`Cmd+,` / `Ctrl+,`): theme, font size, indentation, word wrap and auto save.
 
-<p align="center">
-  <img alt="VS Code in action" src="https://github.com/user-attachments/assets/56af271c-949d-454c-a3ea-16188c063414">
-</p>
+No Marketplace, user extension loading, extension installation UI, editor accounts, settings sync, profile UI, Copilot extension, upstream chat surface, onboarding or full settings editor. VSIX installation and gallery installation are rejected. Built-in language components and the private Sofik runtime still use the internal extension host; this implementation machinery is not a user plugin system. Shared configuration/API services remain where required by the editor. Removed surfaces are excluded at the workbench entrypoints, rather than hidden with CSS.
 
-[Visual Studio Code](https://code.visualstudio.com) is a distribution of the `Code - OSS` repository with Microsoft-specific customizations released under a traditional [Microsoft product license](https://code.visualstudio.com/License/).
+The source snapshot retains internal compatibility services used by built-in languages and the upstream API. This is not a claim that every upstream class or transitive dependency has been eliminated. `src/vs/workbench/contrib/sofik/browser/sofik.services.ts` explicitly contains the remaining service registrations without their optional product surfaces.
 
-[Visual Studio Code](https://code.visualstudio.com) combines the simplicity of a code editor with what developers need for their core edit-build-debug cycle. It provides comprehensive code editing, navigation, and understanding support along with lightweight debugging, a rich extensibility model, and lightweight integration with existing tools.
+## Local build
 
-Visual Studio Code is updated monthly with new features and bug fixes. You can download it for Windows, macOS, and Linux on the [Visual Studio Code website](https://code.visualstudio.com/Download). To get the latest releases every day, install the [Insiders build](https://code.visualstudio.com/insiders).
+Use Node 24 (the upstream pin is in `.nvmrc`), npm and the platform's C++ build tools. On macOS this requires Xcode command line tools. The Sofik setup builds native modules for **Node**, not Electron.
 
-## Contributing
+```sh
+npm run sofik:setup
+npm run sofik:build
+npm run sofik:test
+npm run sofik:serve -- --folder /absolute/path/to/project
+```
 
-There are many ways in which you can participate in this project, for example:
+The server binds only to `127.0.0.1`. The launcher creates a local connection-token file with owner-only permissions, reports its path, and redacts token-bearing URLs from its output. The embedding host reads that file and opens the editor with the `tkn` query parameter; the server exchanges it for a session cookie. Optional launcher arguments: `--port`, `--data-dir`, `--token-file`. Never expose this process directly to a network.
 
-* [Submit bugs and feature requests](https://github.com/microsoft/vscode/issues), and help us verify them as they are checked in
-* Review [source code changes](https://github.com/microsoft/vscode/pulls)
-* Review the [documentation](https://github.com/microsoft/vscode-docs) and make pull requests for anything from typos to new content.
+The current executable target is the Node server plus browser workbench, intended for the existing CEF surface in Sofik. Integration into `espacial-app`, release packaging and native desktop installers are separate work; the app is not modified by this repository.
 
-If you are interested in fixing issues and contributing directly to the codebase, please see the document [How to Contribute](https://github.com/microsoft/vscode/wiki/How-to-Contribute), which covers the following:
+## Agents and language servers
 
-* [How to build and run from source](https://github.com/microsoft/vscode/wiki/How-to-Contribute)
-* [The development workflow, including debugging and running tests](https://github.com/microsoft/vscode/wiki/How-to-Contribute#debugging)
-* [Coding guidelines](https://github.com/microsoft/vscode/wiki/Coding-Guidelines)
-* [Submitting pull requests](https://github.com/microsoft/vscode/wiki/How-to-Contribute#pull-requests)
-* [Finding an issue to work on](https://github.com/microsoft/vscode/wiki/How-to-Contribute#where-to-contribute)
-* [Contributing to translations](https://aka.ms/vscodeloc)
+Run **Sofik: Configure Agent and Languages** from the command palette. This opens one local, user-owned `runtime.json` file, separate from workspace settings:
 
-## Feedback
+```json
+{
+  "agent": { "command": "/absolute/path/to/acp-agent", "args": ["--acp"] },
+  "languageServers": [
+    { "id": "go", "command": "gopls", "args": [], "languages": ["go"] },
+    { "id": "python", "command": "pyright-langserver", "args": ["--stdio"], "languages": ["python"] }
+  ]
+}
+```
 
-* Ask a question on [Stack Overflow](https://stackoverflow.com/questions/tagged/vscode)
-* [Request a new feature](CONTRIBUTING.md)
-* Upvote [popular feature requests](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
-* [File an issue](https://github.com/microsoft/vscode/issues)
-* Connect with the extension author community on [GitHub Discussions](https://github.com/microsoft/vscode-discussions/discussions) or [Slack](https://aka.ms/vscode-dev-community)
-* Follow [@code](https://x.com/code) and let us know what you think!
+Executables must already exist. Sofik does not download agents or language servers. Command arguments are passed directly without a shell. Configuration is read only from the user's runtime file, not executable workspace configuration. Language servers start only in trusted workspaces. Use **Sofik: Restart Language Servers** after editing the file.
 
-See our [wiki](https://github.com/microsoft/vscode/wiki/Feedback-Channels) for a description of each of these channels and information on some other available community-driven channels.
+**Sofik: Ask Agent** (`Cmd+Alt+A` / `Ctrl+Alt+A`) starts an ACP session for the selected workspace and displays streaming output in **Sofik Agent**. **Cancel Agent** interrupts a turn; **Disconnect Agent** stops the process. Configure authentication using the selected agent's own supported login flow. No account system or provider credentials are bundled into this editor.
 
-## Related Projects
+ACP file callbacks are constrained to the selected workspace, including symlink resolution. File writes require approval and use editor edits before saving. Permission requests are never automatically accepted. The process itself runs with the user's local OS permissions; workspace callback checks are not an OS sandbox. ACP client-managed terminal callbacks are not advertised; the editor terminal is independent. Sessions currently last for the editor lifetime.
 
-Many of the core components and extensions to VS Code live in their own repositories on GitHub. For example, the [node debug adapter](https://github.com/microsoft/vscode-node-debug) and the [mono debug adapter](https://github.com/microsoft/vscode-mono-debug) repositories are separate from each other. For a complete list, please visit the [Related Projects](https://github.com/microsoft/vscode/wiki/Related-Projects) page on our [wiki](https://github.com/microsoft/vscode/wiki).
+## Validation
 
-## Bundled Extensions
+`npm run sofik:test` exercises a local ACP agent fixture, rejected permission propagation, cancellation, executable failure, initialization timeout, workspace path isolation, native PTY execution, real JSON LSP completion and server authentication. It uses only local test processes and temporary directories, with no hosted AI/provider calls.
 
-VS Code includes a set of built-in extensions located in the [extensions](extensions) folder, including grammars and snippets for many languages. Extensions that provide rich language support (inline suggestions, Go to Definition) for a language have the suffix `language-features`. For example, the `json` extension provides coloring for `JSON` and the `json-language-features` extension provides rich language support for `JSON`.
+For core TypeScript validation, after setup:
 
-## Development Container
+```sh
+node build/npm/electronTypes.ts
+node node_modules/@typescript/native/lib/tsc.js -p src/tsconfig.json --noEmit --skipLibCheck
+```
 
-This repository includes a Visual Studio Code Dev Containers / GitHub Codespaces development container.
+See [sofik/VALIDATION.md](sofik/VALIDATION.md) for the observed verification and limits of this revision.
 
-* For [Dev Containers](https://aka.ms/vscode-remote/download/containers), use the **Dev Containers: Clone Repository in Container Volume...** command, which creates a Docker volume for better disk I/O on macOS and Windows.
-  * If you already have VS Code and Docker installed, you can also click [here](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/vscode) to get started. This will cause VS Code to automatically install the Dev Containers extension if needed, clone the source code into a container volume, and spin up a dev container for use.
+## Licensing
 
-* For Codespaces, install the [GitHub Codespaces](https://marketplace.visualstudio.com/items?itemName=GitHub.codespaces) extension in VS Code, and use the **Codespaces: Create New Codespace** command.
-
-Docker / the Codespace should have at least **4 cores and 6 GB of RAM (8 GB recommended)** to run a full build. See the [development container README](.devcontainer/README.md) for more information.
-
-## Code of Conduct
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information, see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
-## License
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-Licensed under the [MIT](LICENSE.txt) license.
+The original Code OSS [MIT license](LICENSE.txt), source copyright notices and [third-party notices](ThirdPartyNotices.txt) are preserved. GitHub themes retain their license. Bundled dependencies retain their own licenses (including the ACP SDK's Apache-2.0 license). Microsoft marketplace/product assets and services are not granted by the Code OSS license.

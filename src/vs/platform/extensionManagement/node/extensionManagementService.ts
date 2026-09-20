@@ -143,6 +143,8 @@ export class ExtensionManagementService extends AbstractExtensionManagementServi
 	}
 
 	async install(vsix: URI, options: InstallOptions = {}): Promise<ILocalExtension> {
+		if (this.productService.applicationName === 'sofik-code') { throw new Error("Sofik Code does not support installing extensions."); }
+
 		this.logService.trace('ExtensionManagementService#install', vsix.toString());
 
 		const { location, cleanup } = await this.downloadVsix(vsix);
@@ -174,6 +176,8 @@ export class ExtensionManagementService extends AbstractExtensionManagementServi
 	}
 
 	async installFromLocation(location: URI, profileLocation: URI): Promise<ILocalExtension> {
+		if (this.productService.applicationName === 'sofik-code') { throw new Error("Sofik Code does not support installing extensions."); }
+
 		this.logService.trace('ExtensionManagementService#installFromLocation', location.toString());
 		const local = await this.extensionsScanner.scanUserExtensionAtLocation(location);
 		if (!local || !local.manifest.name || !local.manifest.version) {

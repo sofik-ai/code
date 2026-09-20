@@ -77,32 +77,47 @@ else {
 	// Running out of sources
 	if (Object.keys(product).length === 0) {
 		Object.assign(product, {
-			version: '1.104.0-dev',
-			nameShort: 'Code - OSS Dev',
-			nameLong: 'Code - OSS Dev',
-			applicationName: 'code-oss',
-			dataFolderName: '.vscode-oss',
-			urlProtocol: 'code-oss',
-			reportIssueUrl: 'https://github.com/microsoft/vscode/issues/new',
-			licenseName: 'MIT',
-			licenseUrl: 'https://github.com/microsoft/vscode/blob/main/LICENSE.txt',
-			serverLicenseUrl: 'https://github.com/microsoft/vscode/blob/main/LICENSE.txt',
-			defaultChatAgent: {
-				extensionId: 'GitHub.copilot',
-				chatExtensionId: 'GitHub.copilot-chat',
-				provider: {
-					default: {
-						id: 'github',
-						name: 'GitHub',
-					},
-					enterprise: {
-						id: 'github-enterprise',
-						name: 'GitHub Enterprise',
-					}
-				},
-				providerScopes: []
-			}
-		});
+	"nameShort": "Sofik Code",
+	"nameLong": "Sofik Code",
+	"applicationName": "sofik-code",
+	"dataFolderName": ".sofik-code",
+	"sharedDataFolderName": ".sofik-code-shared",
+	"win32MutexName": "sofikcode",
+	"licenseName": "MIT",
+	"licenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
+	"serverLicenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
+	"serverGreeting": [],
+	"serverLicense": [],
+	"serverLicensePrompt": "",
+	"serverApplicationName": "sofik-code-server",
+	"serverDataFolderName": ".sofik-code-server",
+	"tunnelApplicationName": "code-tunnel-oss",
+	"win32DirName": "Sofik Code",
+	"win32NameVersion": "Sofik Code",
+	"win32RegValueName": "SofikCode",
+	"win32x64AppId": "{{D77B7E06-80BA-4137-BCF4-654B95CCEBC5}",
+	"win32arm64AppId": "{{D1ACE434-89C5-48D1-88D3-E2991DF85475}",
+	"win32x64UserAppId": "{{CC6B787D-37A0-49E8-AE24-8559A032BE0C}",
+	"win32arm64UserAppId": "{{3AEBF0C8-F733-4AD4-BADE-FDB816D53D7B}",
+	"win32AppUserModelId": "Sofik.Code",
+	"win32ShellNameShort": "Sofik Code",
+	"win32TunnelServiceMutex": "vscodeoss-tunnelservice",
+	"win32TunnelMutex": "vscodeoss-tunnel",
+	"darwinBundleIdentifier": "ai.sofik.code",
+	"darwinProfileUUID": "47827DD9-4734-49A0-AF80-7E19B11495CC",
+	"darwinProfilePayloadUUID": "CF808BE7-53F3-46C6-A7E2-7EDB98A5E959",
+	"linuxIconName": "sofik-code",
+	"licenseFileName": "LICENSE.txt",
+	"reportIssueUrl": "https://github.com/sofik-ai/code/issues/new",
+	"nodejsArtifactFeed": "",
+	"electronArtifactFeed": "",
+	"urlProtocol": "sofik-code",
+	"builtInExtensions": [],
+	"enableTelemetry": false,
+	"enableCrashReporter": false,
+	"builtInExtensionsEnabledWithAutoUpdates": [],
+	"version": "1.138.0"
+});
 	}
 }
 

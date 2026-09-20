@@ -128,14 +128,10 @@ import './contrib/codeEditor/electron-browser/codeEditor.contribution.js';
 import './contrib/debug/electron-browser/extensionHostDebugService.js';
 
 // Extensions Management
-import './contrib/extensions/electron-browser/extensions.contribution.js';
-import './contrib/extensions/electron-browser/devtoolsExtensionHost.contribution.js';
 
 // Issues
-import './contrib/issue/electron-browser/issue.contribution.js';
 
 // Surveys
-import './contrib/surveys/browser/survey.contribution.js';
 
 // Process Explorer
 import './contrib/processExplorer/electron-browser/processExplorer.contribution.js';
@@ -150,7 +146,6 @@ import './contrib/terminal/electron-browser/terminal.contribution.js';
 import './contrib/themes/browser/themes.test.contribution.js';
 import './services/themes/electron-browser/themes.contribution.js';
 // User Data Sync
-import './contrib/userDataSync/electron-browser/userDataSync.contribution.js';
 
 // Tags
 import './contrib/tags/electron-browser/workspaceTagsService.js';
@@ -168,7 +163,6 @@ import './contrib/externalTerminal/electron-browser/externalTerminal.contributio
 import './contrib/webview/electron-browser/webview.contribution.js';
 
 // Browser
-import './contrib/browserView/electron-browser/browserView.contribution.js';
 
 // Splash
 import './contrib/splash/electron-browser/splash.contribution.js';
@@ -183,29 +177,22 @@ import './contrib/mergeEditor/electron-browser/mergeEditor.contribution.js';
 import './contrib/multiDiffEditor/browser/multiDiffEditor.contribution.js';
 
 // Remote Tunnel
-import './contrib/remoteTunnel/electron-browser/remoteTunnel.contribution.js';
 
 // Chat
 import './contrib/chat/electron-browser/chat.contribution.js';
-import './contrib/chat/electron-browser/tunnelHost.contribution.js';
 
 // Copilot Voice
-import './contrib/agentsVoice/electron-browser/agentsVoiceNativeCommands.js';
 
 // Encryption
 import './contrib/encryption/electron-browser/encryption.contribution.js';
 
 // Emergency Alert
-import './contrib/emergencyAlert/electron-browser/emergencyAlert.contribution.js';
 
 // MCP
-import './contrib/mcp/electron-browser/mcp.contribution.js';
 
 // Policy Export
-import './contrib/policyExport/electron-browser/policyExport.contribution.js';
 
 // Keybindings Export
-import './contrib/keybindingsExport/electron-browser/keybindingsExport.contribution.js';
 
 // System-wide (OS global) Keybindings
 import './contrib/keybindings/electron-browser/systemWideKeybindings.contribution.js';

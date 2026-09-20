@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/microsoft/vscode",
+  "tag": "1.138.0",
+  "commit": "7debcd0e2acdea1c52de81bf9ee1620444407dda",
+  "history": "Source snapshot; original headers, LICENSE.txt and ThirdPartyNotices.txt preserved."
+}
