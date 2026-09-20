@@ -113,31 +113,6 @@ export function activate(context) {
 		const folder = vscode.workspace.workspaceFolders?.[0];
 		if (folder) { await ensureAgent(bridge, folder, {}); }
 	};
-	const prompt = async () => {
-		if (connecting || agent?.busy) { throw new Error(t('An agent turn is already running.')); }
-		const folders = vscode.workspace.workspaceFolders ?? [];
-		let bridge = await readChatBridge(vscode.workspace.workspaceFile?.fsPath);
-		if (bridge && !bridge.sessionId) {
-			const choices = bridge.sessions.map(session => ({ label: session.label || t('Conversation'), session }));
-			const selected = choices.length === 1 ? choices[0] : await vscode.window.showQuickPick(choices, { title: t('Conversation'), ignoreFocusOut: true });
-			if (!selected) { return; }
-			bridge = { ...bridge, ...selected.session };
-		}
-		const folder = bridge ? folders[0] : folders.length === 1 ? folders[0] : await vscode.window.showWorkspaceFolderPick();
-		if (!folder) { return; }
-		const text = await vscode.window.showInputBox({ prompt: t('Ask your ACP agent'), ignoreFocusOut: true });
-		if (!text?.trim()) { return; }
-		const config = await readConfig();
-		if (!bridge && !config.agent) { throw new Error(t('Open a chat card in this Space to connect its agent.')); }
-		output.show(true);
-		await ensureAgent(bridge, folder, config);
-		output.appendLine(`\n> ${text}\n`);
-		const result = await agent.prompt(text);
-		output.appendLine(`\n[${result.stopReason}]`);
-	};
-	for (const [id, handler] of Object.entries({ 'sofik.agent.prompt': prompt, 'sofik.agent.cancel': () => agent?.cancel(), 'sofik.agent.disconnect': disconnect, 'sofik.languages.restart': startLanguages })) {
-		context.subscriptions.push(vscode.commands.registerCommand(id, async () => { try { await handler(); } catch (error) { output.appendLine(error.message); output.show(true); } }));
-	}
 	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => { if (!(agent instanceof ChatBridgeSession)) { disconnect(); } void startLanguages().catch(error => languageOutput.appendLine(error.message)); }));
 	context.subscriptions.push({ dispose: () => { disposed = true; clearTimeout(refreshTimer); bridgeWatcher?.dispose(); disconnect(); void stopLanguages(); } });
 	void watchChatBridge(vscode.workspace.workspaceFile?.fsPath, refreshBridge, { onError: error => output.appendLine(error.message) }).then(watcher => { if (disposed) { watcher.dispose(); } else { bridgeWatcher = watcher; } });

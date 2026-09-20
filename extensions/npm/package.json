@@ -73,18 +73,6 @@
         ]
       }
     ],
-    "views": {
-      "explorer": [
-        {
-          "id": "npm",
-          "name": "%view.name%",
-          "when": "npm:showScriptExplorer",
-          "icon": "$(json)",
-          "visibility": "hidden",
-          "contextualTitle": "%view.name%"
-        }
-      ]
-    },
     "commands": [
       {
         "command": "npm.runScript",

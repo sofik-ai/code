@@ -40,7 +40,7 @@ Registry.as<IConfigurationRegistry>(Extensions.Configuration).registerDefaultCon
 		'workbench.tips.enabled': false,
 		'workbench.secondarySideBar.defaultVisibility': 'hidden',
 		'window.commandCenter': false,
-		'window.menuBarVisibility': 'compact',
+		'window.menuBarVisibility': 'hidden',
 		'workbench.layoutControl.enabled': false,
 		'security.workspace.trust.enabled': false,
 		'security.workspace.trust.startupPrompt': 'never',

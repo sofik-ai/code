@@ -8,7 +8,7 @@ Environment: macOS arm64, Node 24.16.0.
 - Main TypeScript check and complete Sofik build passed.
 - Removed the restricted-mode enablement, trust UI, notification center/toasts/status icon, web titlebar, Help/Preferences menus, global account/configuration activity, remote-window/ports UI and debugger UI. Removed palette configuration buttons and the optional upstream AI command search.
 - A fresh disposable workspace opened without any trust prompt. Its TypeScript service offered string member completions; editing, save and the integrated zsh terminal worked. The terminal printed `SOFIK_CLEAN_TERMINAL_OK`.
-- The compact application menu contained File, Edit, Selection, View, Go and Terminal. The editor had no header, remote-window indicator or notification bell. Native Sofik CEF rendered the same reduced layout.
+- The editor had no compact application-menu control, header, remote-window indicator or notification bell. Native Sofik CEF rendered the same reduced layout.
 - Compatibility notifications are logged and dismissed asynchronously, so extension requests settle without invisible pending prompts. Tests cover dismissal, no action execution and no retained notification queue. Legacy stored trust settings cannot restore restricted mode.
 
 ## Chat and Code integration
@@ -20,7 +20,7 @@ Native CEF validation used the full Sofik app and a dedicated local TLS daemon c
 1. A chat card loaded the stored conversation.
 2. Sending from the card streamed a response and a `write_file` tool update through ACP.
 3. The tool updated `example.ts`; switching to Code opened the updated file.
-4. **Sofik: Ask Agent** sent from the editor without manual endpoint/agent configuration.
+4. The selected Sofik chat card attached to the editor without a separate command-palette action or manual endpoint configuration.
 5. Output showed tool progress and `[end_turn]`; returning to the card showed the editor's message in the same conversation.
 
 Automated coverage includes the official ACP SDK through the bridge, handshake/load/stream/tool results, permission policy and cancellation, stdio failures/timeouts, workspace path boundaries, canonical-root deduplication, native PTY, real JSON LSP completion and authenticated Code server access. App-side coverage includes ACP controller lifecycle/reconnect, canonical daemon context, idempotency, startup/port recovery, loopback relay authentication, origin rejection and workspace persistence. The daemon ACP tests also pass with Go's race detector.

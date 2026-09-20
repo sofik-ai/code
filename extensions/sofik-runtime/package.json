@@ -10,15 +10,6 @@
   "activationEvents": ["onStartupFinished"],
   "extensionKind": ["workspace"],
   "capabilities": { "untrustedWorkspaces": { "supported": false } },
-  "contributes": {
-    "commands": [
-      { "command": "sofik.agent.prompt", "title": "Ask Agent", "category": "Sofik" },
-      { "command": "sofik.agent.cancel", "title": "Cancel Agent", "category": "Sofik" },
-      { "command": "sofik.agent.disconnect", "title": "Disconnect Agent", "category": "Sofik" },
-      { "command": "sofik.languages.restart", "title": "Restart Language Servers", "category": "Sofik" }
-    ],
-    "keybindings": [{ "command": "sofik.agent.prompt", "key": "ctrl+alt+a", "mac": "cmd+alt+a" }]
-  },
   "scripts": {
     "build": "node build.mjs",
     "test": "node --test test/*.test.mjs"

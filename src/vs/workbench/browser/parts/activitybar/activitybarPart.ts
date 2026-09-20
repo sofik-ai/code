@@ -16,11 +16,9 @@ import { ToggleSidebarPositionAction, ToggleSidebarVisibilityAction } from '../.
 import { IThemeService, IColorTheme, registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';
 import { ACTIVITY_BAR_BACKGROUND, ACTIVITY_BAR_BORDER, ACTIVITY_BAR_FOREGROUND, ACTIVITY_BAR_ACTIVE_BORDER, ACTIVITY_BAR_BADGE_BACKGROUND, ACTIVITY_BAR_BADGE_FOREGROUND, ACTIVITY_BAR_INACTIVE_FOREGROUND, ACTIVITY_BAR_ACTIVE_BACKGROUND, ACTIVITY_BAR_DRAG_AND_DROP_BORDER, ACTIVITY_BAR_ACTIVE_FOCUS_BORDER, MODERN_ACTIVITY_BAR_BACKGROUND, MODERN_ACTIVITY_BAR_INACTIVE_BACKGROUND } from '../../../common/theme.js';
 import { activeContrastBorder, contrastBorder, focusBorder } from '../../../../platform/theme/common/colorRegistry.js';
-import { addDisposableListener, append, EventType, isAncestor, $, clearNode } from '../../../../base/browser/dom.js';
+import { addDisposableListener, append, EventType, $, clearNode } from '../../../../base/browser/dom.js';
 import { assertReturnsDefined } from '../../../../base/common/types.js';
-import { CustomMenubarControl } from '../titlebar/menubarControl.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
-import { getMenuBarVisibility, MenuSettings } from '../../../../platform/window/common/window.js';
 import { IAction, Separator, SubmenuAction, toAction } from '../../../../base/common/actions.js';
 import { StandardKeyboardEvent } from '../../../../base/browser/keyboardEvent.js';
 import { KeyCode } from '../../../../base/common/keyCodes.js';
@@ -426,8 +424,6 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 
 	private element: HTMLElement | undefined;
 
-	private readonly menuBar = this._register(new MutableDisposable<CustomMenubarControl>());
-	private menuBarContainer: HTMLElement | undefined;
 	private compositeBarContainer: HTMLElement | undefined;
 	private readonly globalCompositeBar: GlobalCompositeBar | undefined;
 
@@ -459,33 +455,10 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 				}
 			}, part, paneCompositePart, instantiationService, storageService, extensionService, viewDescriptorService, viewService, contextKeyService, environmentService, layoutService);
 
-		// Accounts and the global configuration menu are not part of Sofik Code.
-
-		// Register for configuration changes
-		this._register(this.configurationService.onDidChangeConfiguration(e => {
-			if (e.affectsConfiguration(MenuSettings.MenuBarVisibility)) {
-				if (getMenuBarVisibility(this.configurationService) === 'compact') {
-					this.installMenubar();
-				} else {
-					this.uninstallMenubar();
-				}
-			}
-		}));
+		// Accounts, configuration, and the compact menu are not part of Sofik Code.
 	}
 
-	private fillContextMenuActions(actions: IAction[], e?: MouseEvent | GestureEvent) {
-		// Menu
-		const menuBarVisibility = getMenuBarVisibility(this.configurationService);
-		if (menuBarVisibility === 'compact' || menuBarVisibility === 'hidden' || menuBarVisibility === 'toggle') {
-			actions.unshift(...[toAction({ id: 'toggleMenuVisibility', label: localize('menu', "Menu"), checked: menuBarVisibility === 'compact', run: () => this.configurationService.updateValue(MenuSettings.MenuBarVisibility, menuBarVisibility === 'compact' ? 'toggle' : 'compact') }), new Separator()]);
-		}
-
-		if (menuBarVisibility === 'compact' && this.menuBarContainer && e?.target) {
-			if (isAncestor(e.target as Node, this.menuBarContainer)) {
-				actions.unshift(...[toAction({ id: 'hideCompactMenu', label: localize('hideMenu', "Hide Menu"), run: () => this.configurationService.updateValue(MenuSettings.MenuBarVisibility, 'toggle') }), new Separator()]);
-			}
-		}
-
+	private fillContextMenuActions(actions: IAction[], _e?: MouseEvent | GestureEvent) {
 		// Global Composite Bar
 		if (this.globalCompositeBar) {
 			actions.push(new Separator());
@@ -495,45 +468,8 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 		actions.push(...this.getActivityBarContextMenuActions());
 	}
 
-	private uninstallMenubar() {
-		if (this.menuBar.value) {
-			this.menuBar.value = undefined;
-		}
-
-		if (this.menuBarContainer) {
-			this.menuBarContainer.remove();
-			this.menuBarContainer = undefined;
-		}
-	}
-
-	private installMenubar() {
-		if (this.menuBar.value) {
-			return; // prevent menu bar from installing twice #110720
-		}
-
-		this.menuBarContainer = $('.menubar');
-
-		const content = assertReturnsDefined(this.element);
-		content.prepend(this.menuBarContainer);
-
-		// Menubar: install a custom menu bar depending on configuration
-		this.menuBar.value = this.instantiationService.createInstance(CustomMenubarControl);
-		this.menuBar.value.create(this.menuBarContainer);
-
-	}
-
 	private registerKeyboardNavigationListeners(): void {
 		this.keyboardNavigationDisposables.clear();
-
-		// Up/Down or Left/Right arrow on compact menu
-		if (this.menuBarContainer) {
-			this.keyboardNavigationDisposables.add(addDisposableListener(this.menuBarContainer, EventType.KEY_DOWN, e => {
-				const kbEvent = new StandardKeyboardEvent(e);
-				if (kbEvent.equals(KeyCode.DownArrow) || kbEvent.equals(KeyCode.RightArrow)) {
-					this.focus();
-				}
-			}));
-		}
 
 		// Up/Down on Activity Icons
 		if (this.compositeBarContainer) {
@@ -541,8 +477,6 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 				const kbEvent = new StandardKeyboardEvent(e);
 				if (kbEvent.equals(KeyCode.DownArrow) || kbEvent.equals(KeyCode.RightArrow)) {
 					this.globalCompositeBar?.focus();
-				} else if (kbEvent.equals(KeyCode.UpArrow) || kbEvent.equals(KeyCode.LeftArrow)) {
-					this.menuBar.value?.toggleFocus();
 				}
 			}));
 		}
@@ -561,11 +495,6 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 	override create(parent: HTMLElement): HTMLElement {
 		this.element = parent;
 
-		// Install menubar if compact
-		if (getMenuBarVisibility(this.configurationService) === 'compact') {
-			this.installMenubar();
-		}
-
 		// View Containers action bar
 		this.compositeBarContainer = super.create(this.element);
 
@@ -581,13 +510,6 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 	}
 
 	override layout(width: number, height: number): void {
-		if (this.menuBarContainer) {
-			if (this.options.orientation === ActionsOrientation.VERTICAL) {
-				height -= this.menuBarContainer.clientHeight;
-			} else {
-				width -= this.menuBarContainer.clientWidth;
-			}
-		}
 		if (this.globalCompositeBar) {
 			if (this.options.orientation === ActionsOrientation.VERTICAL) {
 				height -= this.globalCompositeBar.element.clientHeight;

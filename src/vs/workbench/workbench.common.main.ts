@@ -371,9 +371,8 @@ import './contrib/callHierarchy/browser/callHierarchy.contribution.js';
 // Type Hierarchy
 import './contrib/typeHierarchy/browser/typeHierarchy.contribution.js';
 
-// Outline
+// Document symbols
 import './contrib/codeEditor/browser/outline/documentSymbolsOutline.js';
-import './contrib/outline/browser/outline.contribution.js';
 
 // Language Detection
 import './contrib/languageDetection/browser/languageDetection.contribution.js';
@@ -393,10 +392,6 @@ import './contrib/languageStatus/browser/languageStatus.contribution.js';
 
 // Code Actions
 import './contrib/codeActions/browser/codeActions.contribution.js';
-
-// Timeline
-import './contrib/timeline/browser/timeline.contribution.js';
-import './contrib/timeline/browser/timeline.service.contribution.js';
 
 // Local History
 import './contrib/localHistory/browser/localHistory.contribution.js';

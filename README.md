@@ -32,7 +32,7 @@ The executable target is the Node server plus browser workbench, embedded by the
 
 ## Agents and language servers
 
-Inside Sofik, **Ask Agent** connects automatically to the selected chat card, or the only chat in the Space. With multiple conversations, the editor asks which one to use. The daemon resolves the stored working directory, including worktrees. The host supplies an authenticated local bridge through a private sidecar; provider credentials stay in the daemon.
+Inside Sofik, the editor attaches automatically to the chat card selected by the host, or to the only chat in the Space. The daemon resolves the stored working directory, including worktrees. The host supplies an authenticated local bridge through a private sidecar; provider credentials stay in the daemon. The Code command palette has no separate agent commands: conversations stay in their Sofik chat cards.
 
 For standalone development, the private runtime still reads its user-level `runtime.json` (under the Sofik Runtime global storage directory); there is no settings or configuration command. The optional file supports:
 
@@ -46,9 +46,7 @@ For standalone development, the private runtime still reads its user-level `runt
 }
 ```
 
-Executables must already exist. Sofik does not download agents or language servers. Command arguments are passed directly without a shell. Configuration is read only from the user's runtime file, not executable workspace configuration. Languages activate immediately; restricted mode and trust prompts are disabled at the service level. Use **Sofik: Restart Language Servers** after editing the file.
-
-**Sofik: Ask Agent** (`Cmd+Alt+A` / `Ctrl+Alt+A`) uses the card conversation through ACP when hosted, and a stdio session when standalone, displaying streaming output in **Sofik Agent**. **Cancel Agent** interrupts a turn; **Disconnect Agent** stops the process. Configure authentication using the selected agent's own supported login flow. No account system or provider credentials are bundled into this editor.
+Executables must already exist. Sofik does not download agents or language servers. Command arguments are passed directly without a shell. Configuration is read only from the user's runtime file, not executable workspace configuration. Languages activate immediately; restricted mode and trust prompts are disabled at the service level. Restart the Code surface after editing the file.
 
 ACP file callbacks are constrained to the selected workspace, including symlink resolution. File writes require approval and use editor edits before saving. Permission requests are never automatically accepted. The process itself runs with the user's local OS permissions; workspace callback checks are not an OS sandbox. ACP client-managed terminal callbacks are not advertised; the editor terminal is independent. Sessions currently last for the editor lifetime.
 
