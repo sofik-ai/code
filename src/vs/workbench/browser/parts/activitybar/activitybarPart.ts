@@ -438,7 +438,7 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 		options: IPaneCompositeBarOptions,
 		part: Parts,
 		paneCompositePart: IPaneCompositePart,
-		showGlobalActivities: boolean,
+		_showGlobalActivities: boolean,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IStorageService storageService: IStorageService,
 		@IExtensionService extensionService: IExtensionService,
@@ -459,9 +459,7 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 				}
 			}, part, paneCompositePart, instantiationService, storageService, extensionService, viewDescriptorService, viewService, contextKeyService, environmentService, layoutService);
 
-		if (showGlobalActivities) {
-			this.globalCompositeBar = this._register(instantiationService.createInstance(GlobalCompositeBar, () => this.getContextMenuActions(), (theme: IColorTheme) => this.options.colors(theme), this.options.activityHoverOptions));
-		}
+		// Accounts and the global configuration menu are not part of Sofik Code.
 
 		// Register for configuration changes
 		this._register(this.configurationService.onDidChangeConfiguration(e => {

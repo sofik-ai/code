@@ -715,6 +715,10 @@ export interface IWorkbenchLayoutService extends ILayoutService {
 }
 
 export function shouldShowCustomTitleBar(configurationService: IConfigurationService, window: Window, menuBarToggled?: boolean): boolean {
+	// Sofik owns the window header. The embedded workbench starts at its tabs.
+	if (isWeb) {
+		return false;
+	}
 	if (!hasCustomTitlebar(configurationService)) {
 		return false;
 	}

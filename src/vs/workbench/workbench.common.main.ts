@@ -26,7 +26,6 @@ import '../sessions/common/sizes.js';
 
 import './browser/actions/textInputActions.js';
 import './browser/actions/developerActions.js';
-import './browser/actions/helpActions.js';
 import './browser/actions/layoutActions.js';
 import './browser/actions/listCommands.js';
 import './browser/actions/navigationActions.js';
@@ -270,11 +269,7 @@ import './contrib/scm/browser/quickDiff.contribution.js';
 import './contrib/scm/browser/scm.service.contribution.js';
 
 // Debug
-import './contrib/debug/browser/debug.contribution.js';
-import './contrib/debug/browser/debugEditorContribution.js';
-import './contrib/debug/browser/breakpointEditorContribution.js';
-import './contrib/debug/browser/callStackEditorContribution.js';
-import './contrib/debug/browser/repl.js';
+import './contrib/debug/browser/debug.service.contribution.js';
 
 // Markers
 import './contrib/markers/browser/markers.contribution.js';
@@ -328,7 +323,6 @@ import './contrib/tasks/browser/task.contribution.js';
 
 // Remote
 import './contrib/remote/common/remote.contribution.js';
-import './contrib/remote/browser/remote.contribution.js';
 
 // Emmet
 import './contrib/emmet/browser/emmet.contribution.js';
@@ -358,10 +352,8 @@ import './contrib/limitIndicator/browser/limitIndicator.contribution.js';
 import './contrib/inlayHints/browser/inlayHintsAccessibilty.js';
 
 // Themes
-import './contrib/themes/browser/themes.contribution.js';
 
 // Update
-import './contrib/update/browser/update.contribution.js';
 
 // Surveys
 
@@ -410,7 +402,6 @@ import './contrib/timeline/browser/timeline.service.contribution.js';
 import './contrib/localHistory/browser/localHistory.contribution.js';
 
 // Workspace
-import './contrib/workspace/browser/workspace.contribution.js';
 
 // Workspaces
 import './contrib/workspaces/browser/workspaces.contribution.js';
@@ -446,6 +437,6 @@ import './contrib/opener/browser/opener.contribution.js';
 
 //#endregion
 
-// Sofik product defaults and compact preferences.
+// Sofik product defaults and language schemas.
 import './contrib/sofik/browser/sofik.contribution.js';
 import './contrib/sofik/browser/sofik.services.js';

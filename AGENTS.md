@@ -4,7 +4,7 @@ This is an independent, fixed Code OSS 1.138.0 source base. Do not sync or rebas
 
 ## Product boundaries
 
-Keep editing, explorer/search/Git, terminal, language intelligence, ACP and the two GitHub themes. No user extension installation, Marketplace, accounts, sync, Copilot UI or full settings editor. Internal language modules and API compatibility services are implementation details, not public extensibility. Do not remove an internal service without validating its actual dependents in the browser.
+Keep editing, explorer/search/Git, terminal, language intelligence, ACP and the two GitHub themes. No user extension installation, Marketplace, accounts, sync, Copilot UI or settings/configuration UI. No restricted mode, notification UI, Help menu, internal web titlebar, remote window/ports UI or debugger UI. Keep transport authentication and workspace path boundaries. Internal language modules and API compatibility services are implementation details, not public extensibility. Do not remove an internal service without validating its actual dependents in the browser.
 
 ## Working locally
 

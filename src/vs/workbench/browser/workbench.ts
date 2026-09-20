@@ -5,7 +5,7 @@
 
 import './style.js';
 import { runWhenWindowIdle } from '../../base/browser/dom.js';
-import { Event, Emitter, setGlobalLeakWarningThreshold } from '../../base/common/event.js';
+import { Emitter, setGlobalLeakWarningThreshold } from '../../base/common/event.js';
 import { RunOnceScheduler, timeout } from '../../base/common/async.js';
 import { isFirefox, isSafari, isChrome } from '../../base/browser/browser.js';
 import { mark } from '../../base/common/performance.js';
@@ -21,13 +21,6 @@ import { IConfigurationChangeEvent, IConfigurationService } from '../../platform
 import { IInstantiationService } from '../../platform/instantiation/common/instantiation.js';
 import { ServiceCollection } from '../../platform/instantiation/common/serviceCollection.js';
 import { LifecyclePhase, ILifecycleService, WillShutdownEvent } from '../services/lifecycle/common/lifecycle.js';
-import { INotificationService } from '../../platform/notification/common/notification.js';
-import { NotificationService } from '../services/notification/common/notificationService.js';
-import { NotificationsCenter } from './parts/notifications/notificationsCenter.js';
-import { NotificationsAlerts } from './parts/notifications/notificationsAlerts.js';
-import { NotificationsStatus } from './parts/notifications/notificationsStatus.js';
-import { registerNotificationCommands } from './parts/notifications/notificationsCommands.js';
-import { NotificationsToasts } from './parts/notifications/notificationsToasts.js';
 import { setARIAContainer } from '../../base/browser/ui/aria/aria.js';
 import { FontMeasurements } from '../../editor/browser/config/fontMeasurements.js';
 import { createBareFontInfoFromRawSettings } from '../../editor/common/config/fontInfoFromSettings.js';
@@ -46,8 +39,6 @@ import { setHoverDelegateFactory } from '../../base/browser/ui/hover/hoverDelega
 import { setBaseLayerHoverDelegate } from '../../base/browser/ui/hover/hoverDelegate2.js';
 import { AccessibilityProgressSignalScheduler } from '../../platform/accessibilitySignal/browser/progressAccessibilitySignalScheduler.js';
 import { setProgressAccessibilitySignalScheduler } from '../../base/browser/ui/progressbar/progressAccessibilitySignal.js';
-import { AccessibleViewRegistry } from '../../platform/accessibility/browser/accessibleViewRegistry.js';
-import { NotificationAccessibleView } from './parts/notifications/notificationAccessibleView.js';
 import { IMarkdownRendererService } from '../../platform/markdown/browser/markdownRenderer.js';
 import { EditorMarkdownCodeBlockRenderer } from '../../editor/browser/widget/markdownRenderer/browser/editorMarkdownCodeBlockRenderer.js';
 
@@ -144,7 +135,6 @@ export class Workbench extends Layout {
 				const hostService = accessor.get(IHostService);
 				const hoverService = accessor.get(IHoverService);
 				const dialogService = accessor.get(IDialogService);
-				const notificationService = accessor.get(INotificationService) as NotificationService;
 				const markdownRendererService = accessor.get(IMarkdownRendererService);
 
 				// Set code block renderer for markdown rendering
@@ -169,7 +159,7 @@ export class Workbench extends Layout {
 				this.registerListeners(lifecycleService, storageService, configurationService, hostService, dialogService);
 
 				// Render Workbench
-				this.renderWorkbench(instantiationService, notificationService, storageService, configurationService);
+				this.renderWorkbench(instantiationService, storageService, configurationService);
 
 				// Workbench Layout
 				this.createWorkbenchLayout();
@@ -317,7 +307,7 @@ export class Workbench extends Layout {
 		}
 	}
 
-	private renderWorkbench(instantiationService: IInstantiationService, notificationService: NotificationService, storageService: IStorageService, configurationService: IConfigurationService): void {
+	private renderWorkbench(instantiationService: IInstantiationService, storageService: IStorageService, configurationService: IConfigurationService): void {
 
 		// ARIA & Signals
 		setARIAContainer(this.mainContainer);
@@ -360,9 +350,6 @@ export class Workbench extends Layout {
 			mark(`code/didCreatePart/${id}`);
 		}
 
-		// Notification Handlers
-		this.createNotificationsHandlers(instantiationService, notificationService);
-
 		// Add Workbench to DOM
 		this.parent.appendChild(this.mainContainer);
 	}
@@ -377,36 +364,6 @@ export class Workbench extends Layout {
 		}
 
 		return part;
-	}
-
-	private createNotificationsHandlers(instantiationService: IInstantiationService, notificationService: NotificationService): void {
-
-		// Instantiate Notification components
-		const notificationsCenter = this._register(instantiationService.createInstance(NotificationsCenter, this.mainContainer, notificationService.model));
-		const notificationsToasts = this._register(instantiationService.createInstance(NotificationsToasts, this.mainContainer, notificationService.model));
-		this._register(instantiationService.createInstance(NotificationsAlerts, notificationService.model));
-		const notificationsStatus = instantiationService.createInstance(NotificationsStatus, notificationService.model);
-
-		// Visibility
-		this._register(notificationsCenter.onDidChangeVisibility(() => {
-			notificationsStatus.update(notificationsCenter.isVisible, notificationsToasts.isVisible);
-			notificationsToasts.update(notificationsCenter.isVisible);
-		}));
-
-		this._register(notificationsToasts.onDidChangeVisibility(() => {
-			notificationsStatus.update(notificationsCenter.isVisible, notificationsToasts.isVisible);
-		}));
-
-		// Register Commands
-		registerNotificationCommands(notificationsCenter, notificationsToasts, notificationService.model);
-
-		// Register notification accessible view
-		AccessibleViewRegistry.register(new NotificationAccessibleView());
-
-		// Register with Layout
-		this.registerNotifications({
-			onDidChangeNotificationsVisibility: Event.map(Event.any(notificationsToasts.onDidChangeVisibility, notificationsCenter.onDidChangeVisibility), () => notificationsToasts.isVisible || notificationsCenter.isVisible)
-		});
 	}
 
 	private restore(lifecycleService: ILifecycleService): void {

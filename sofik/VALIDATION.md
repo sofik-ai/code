@@ -1,31 +1,34 @@
-# Validation — 2026-09-19 (America/Sao_Paulo)
+# Validation — 2026-09-20 (America/Sao_Paulo)
 
-Base: Code OSS 1.138.0, upstream commit `7debcd0e2acdea1c52de81bf9ee1620444407dda`.
-Environment: macOS arm64, Node 24.16.0. The inherited `.nvmrc` recommends 24.18.0.
+Base: Code OSS 1.138.0, upstream `7debcd0e2acdea1c52de81bf9ee1620444407dda`.
+Environment: macOS arm64, Node 24.16.0.
 
-## Passed
+## Simplified workbench
 
-- Full main-source TypeScript check (`@typescript/native`, `src/tsconfig.json`, no emit).
-- Sofik build: main source transpilation, retained built-in language bundles and Sofik runtime bundle.
-- Eight automated tests: ACP handshake/streaming/permission rejection; cancellation and overlapping prompt rejection; failed executable and initialization timeout; workspace traversal/symlink rejection (including dangling links); runtime configuration validation; native PTY output/exit; real JSON LSP schema completion; HTTP server authentication.
-- Browser workbench opened a local disposable project with the Sofik identity and no Accounts or Extensions activity entries.
-- TypeScript member suggestions included `at`, `charAt`, `includes`, `length`, etc. A completed `message.toLowerCase();` edit was saved and restored after reload.
-- Compact preferences showed exactly five options. GitHub Dark and GitHub Light rendered, and the chosen light theme survived reload.
-- Integrated zsh terminal executed a test printf command and displayed `SOFIK_TERMINAL_OK`.
-- Sofik's configurable LSP client started an external stdio fixture and offered `sofikExternalCompletion` in a plain-text file.
-- Through the actual editor commands, an ACP fixture requested permission; selecting **Reject Once** produced `deny` and `[end_turn]` in the Sofik Agent output. No external AI provider was called.
-- Diff whitespace checks passed.
+- Main TypeScript check and complete Sofik build passed.
+- Removed the restricted-mode enablement, trust UI, notification center/toasts/status icon, web titlebar, Help/Preferences menus, global account/configuration activity, remote-window/ports UI and debugger UI. Removed palette configuration buttons and the optional upstream AI command search.
+- A fresh disposable workspace opened without any trust prompt. Its TypeScript service offered string member completions; editing, save and the integrated zsh terminal worked. The terminal printed `SOFIK_CLEAN_TERMINAL_OK`.
+- The compact application menu contained File, Edit, Selection, View, Go and Terminal. The editor had no header, remote-window indicator or notification bell. Native Sofik CEF rendered the same reduced layout.
+- Compatibility notifications are logged and dismissed asynchronously, so extension requests settle without invisible pending prompts. Tests cover dismissal, no action execution and no retained notification queue. Legacy stored trust settings cannot restore restricted mode.
+
+## Chat and Code integration
+
+The desktop cards and the private editor module now share ACP sessions owned by the Sofik daemon. A session is the existing conversation, not a new agent instance. The editor resolves the stored project/worktree through authenticated session context. With a selected/only card it connects without a prompt; multiple unselected chats require an explicit conversation choice. The editor preserves its original first root and appends missing worktrees, comparing canonical paths to avoid symlink aliases.
+
+Native CEF validation used the full Sofik app and a dedicated local TLS daemon containing only a deterministic test provider:
+
+1. A chat card loaded the stored conversation.
+2. Sending from the card streamed a response and a `write_file` tool update through ACP.
+3. The tool updated `example.ts`; switching to Code opened the updated file.
+4. **Sofik: Ask Agent** sent from the editor without manual endpoint/agent configuration.
+5. Output showed tool progress and `[end_turn]`; returning to the card showed the editor's message in the same conversation.
+
+Automated coverage includes the official ACP SDK through the bridge, handshake/load/stream/tool results, permission policy and cancellation, stdio failures/timeouts, workspace path boundaries, canonical-root deduplication, native PTY, real JSON LSP completion and authenticated Code server access. App-side coverage includes ACP controller lifecycle/reconnect, canonical daemon context, idempotency, startup/port recovery, loopback relay authentication, origin rejection and workspace persistence. The daemon ACP tests also pass with Go's race detector.
 
 ## Limits
 
-- `espacial-app`/CEF integration and packaged macOS/Windows/Linux distributions are not part of this repository change. Browser validation uses the local Node development server.
-- External LSP/ACP production executables and their authentication are user supplied; fixture tests do not establish compatibility with every agent or language server.
-- The upstream internal extension host, configuration service and some compatibility services remain necessary for the retained language components. Their optional product screens are excluded; this is not a complete removal of every upstream type or dependency.
-- Development reloads can log canceled file watches, closed IndexedDB writes and upstream lifecycle warnings. A missing JSON schema provider found during validation was fixed by registering schema documents independently from the removed settings UI.
-- The retained accessibility/high-contrast fallback theme assets are still bundled; Sofik's compact preferences offer only GitHub Dark and GitHub Light.
-
-## Desktop integration follow-up
-
-The Sofik Flutter app now embeds this workbench through its CEF surface and a bundled Node runtime. Its isolated full-app fixture verified native typing/save, TypeScript autocomplete, terminal execution, GitHub theme selection, ACP permission rejection and streaming, external LSP suggestions, multi-root folders, Canvas/Code retention and separate Space sessions. No real provider was called. App-side tests exercise authenticated process ownership, stable port/token rotation, occupied-port recovery, disposal during startup and native overlay masks.
-
-This uncovered a missing workspace-trust transition participant after the Extensions UI removal; it is now registered independently so built-in language modules and ACP activate immediately after trust. A multi-root startup race was also fixed: a configuration notification received before workspace creation no longer dereferences an uninitialized workspace.
+- All agent execution above used local fixtures. Live provider login and paid requests were not exercised.
+- Native validation is macOS Debug. Windows/Linux execution, release optimization, signing and installers are not certified here.
+- The editor/configuration/extension-host compatibility services remain where languages and the upstream API depend on them. Optional product UI is removed at registrations and layout, not hidden with injected CSS; this does not claim every upstream class/dependency has been deleted.
+- GitHub Dark/Light follow the host scheme; upstream accessibility fallback theme assets remain bundled.
+- Existing Flutter/CEF duplicate accessibility-class and native-shortcut diagnostic warnings remain outside this change; no crash occurred in the tested journeys.

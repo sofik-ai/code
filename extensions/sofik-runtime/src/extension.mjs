@@ -2,6 +2,7 @@
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 import { AgentSession } from './acp.mjs';
+import { ChatBridgeSession, readChatBridge, automaticChatContext, watchChatBridge, canonicalChatFolders } from './chat-bridge.mjs';
 import { parseConfig, workspacePath } from './config.mjs';
 
 export function activate(context) {
@@ -12,24 +13,17 @@ export function activate(context) {
 	const languageClients = [];
 	let agent;
 	let connecting = false;
+	let disposed = false;
+	let refreshTimer;
+	let bridgeWatcher;
 	const t = vscode.l10n.t;
 	const readConfig = async () => {
 		try { return parseConfig(new TextDecoder().decode(await vscode.workspace.fs.readFile(configUri))); }
 		catch (error) { if (error.code === 'FileNotFound') { return { languageServers: [] }; } throw error; }
 	};
-	const configure = async () => {
-		await vscode.workspace.fs.createDirectory(context.globalStorageUri);
-		try { await vscode.workspace.fs.stat(configUri); }
-		catch (error) {
-			if (error.code !== 'FileNotFound') { throw error; }
-			await vscode.workspace.fs.writeFile(configUri, new TextEncoder().encode(JSON.stringify({ agent: null, languageServers: [] }, null, 2) + '\n'));
-		}
-		await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(configUri));
-	};
 	const stopLanguages = async () => { await Promise.all(languageClients.splice(0).map(client => client.stop())); };
 	const startLanguages = async () => {
 		await stopLanguages();
-		if (!vscode.workspace.isTrusted) { return; }
 		const config = await readConfig();
 		for (const folder of vscode.workspace.workspaceFolders ?? []) {
 			for (const server of config.languageServers) {
@@ -42,28 +36,20 @@ export function activate(context) {
 		}
 	};
 	const disconnect = () => { agent?.dispose(); agent = undefined; };
-	const prompt = async () => {
-		if (!vscode.workspace.isTrusted) { throw new Error(t('Trust the workspace before connecting an agent.')); }
+	const ensureAgent = async (bridge, folder, config) => {
+		if (disposed) { return; }
 		if (connecting || agent?.busy) { throw new Error(t('An agent turn is already running.')); }
-		const folders = vscode.workspace.workspaceFolders ?? [];
-		const folder = folders.length === 1 ? folders[0] : await vscode.window.showWorkspaceFolderPick();
-		if (!folder) { return; }
-		const text = await vscode.window.showInputBox({ prompt: t('Ask your ACP agent'), ignoreFocusOut: true });
-		if (!text?.trim()) { return; }
-		const config = await readConfig();
-		if (!config.agent) { await configure(); void vscode.window.showInformationMessage(t('Set agent.command and agent.args, save, then ask again.')); return; }
-		output.show(true);
-		if (agent && (agent.cwd !== folder.uri.fsPath || agent.connection.signal.aborted)) { disconnect(); }
+		if (agent && ((!bridge && agent.cwd !== folder.uri.fsPath) || agent.connection.signal.aborted || (bridge && agent instanceof ChatBridgeSession && (agent.context.endpoint !== bridge.endpoint || agent.context.token !== bridge.token)) || agent.sessionId !== (bridge?.sessionId ?? agent.sessionId))) { disconnect(); }
 		if (!agent) {
 			connecting = true;
-			const session = new AgentSession({
+			const session = new (bridge ? ChatBridgeSession : AgentSession)({
 				sessionUpdate: async ({ update }) => {
 					if (update.sessionUpdate === 'agent_message_chunk' && update.content.type === 'text') { output.append(update.content.text); }
 					else if (update.sessionUpdate === 'tool_call' || update.sessionUpdate === 'tool_call_update') { output.appendLine(`\n${update.title ?? update.toolCallId}: ${update.status ?? ''}`); }
 				},
-				requestPermission: async ({ toolCall, options }) => {
-					const selection = await vscode.window.showQuickPick(options.map(option => ({ label: option.name, option })), { title: toolCall.title, placeHolder: t('Agent permission'), ignoreFocusOut: true });
-					return { outcome: selection ? { outcome: 'selected', optionId: selection.option.optionId } : { outcome: 'cancelled' } };
+				requestPermission: async ({ options }) => {
+					const option = options.find(item => item.kind === 'allow_once') ?? options.find(item => item.kind === 'allow_always');
+					return { outcome: option ? { outcome: 'selected', optionId: option.optionId } : { outcome: 'cancelled' } };
 				},
 				readTextFile: async ({ sessionId, path, line = 1, limit }) => {
 					if (sessionId !== session.sessionId || session.cancelled) { throw new Error('Inactive agent session.'); }
@@ -75,8 +61,6 @@ export function activate(context) {
 					if (sessionId !== session.sessionId || session.cancelled) { throw new Error('Inactive agent session.'); }
 					const uri = vscode.Uri.file(await workspacePath(folder.uri.fsPath, path));
 					if (session.cancelled) { throw new Error('Agent turn cancelled.'); }
-					const approved = await vscode.window.showWarningMessage(t('Apply agent changes to {0}?', vscode.workspace.asRelativePath(uri)), { modal: true }, t('Apply'));
-					if (!approved || session.cancelled) { throw new Error('File change declined.'); }
 					const edit = new vscode.WorkspaceEdit();
 					try {
 						const document = await vscode.workspace.openTextDocument(uri);
@@ -95,21 +79,67 @@ export function activate(context) {
 				}
 			}, { onStderr: message => output.append(message) });
 			agent = session;
-			try { await session.connect(config.agent, folder.uri.fsPath); }
+			try {
+				await session.connect(bridge ?? config.agent, bridge?.cwd ?? folder.uri.fsPath);
+				if (disposed) { session.dispose(); return; }
+				if (session instanceof ChatBridgeSession) {
+					const existing = vscode.workspace.workspaceFolders ?? [];
+					const known = new Set(await canonicalChatFolders(existing.map(item => item.uri.fsPath)));
+					const additions = session.sourceFolders.filter(root => !known.has(root)).map(root => ({ uri: vscode.Uri.file(root) }));
+					// Appending leaves the first root intact and avoids restarting
+					// this extension host during an active ACP connection.
+					if (additions.length && !vscode.workspace.updateWorkspaceFolders(existing.length, 0, ...additions)) {
+						throw new Error(t('Could not open the conversation folders.'));
+					}
+				}
+			}
 			catch (error) { disconnect(); throw error; }
 			finally { connecting = false; }
 		}
-		output.appendLine(`\n> ${text}\n`);
-		await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: t('Sofik Agent'), cancellable: true }, async (_, token) => {
-			const subscription = token.onCancellationRequested(() => { void agent?.cancel(); });
-			try { const result = await agent.prompt(text); output.appendLine(`\n[${result.stopReason}]`); }
-			finally { subscription.dispose(); }
-		});
+		if (bridge && agent instanceof ChatBridgeSession) { agent.context = bridge; }
 	};
-	for (const [id, handler] of Object.entries({ 'sofik.agent.prompt': prompt, 'sofik.agent.cancel': () => agent?.cancel(), 'sofik.agent.disconnect': disconnect, 'sofik.runtime.configure': configure, 'sofik.languages.restart': startLanguages })) {
-		context.subscriptions.push(vscode.commands.registerCommand(id, async () => { try { await handler(); } catch (error) { output.appendLine(error.message); void vscode.window.showErrorMessage(error.message); } }));
+	const refreshBridge = async () => {
+		if (disposed) { return; }
+		if (connecting || agent?.busy) {
+			clearTimeout(refreshTimer);
+			refreshTimer = setTimeout(() => { void refreshBridge().catch(error => output.appendLine(error.message)); }, 250);
+			return;
+		}
+		const bridge = automaticChatContext(await readChatBridge(vscode.workspace.workspaceFile?.fsPath));
+		if (!bridge) {
+			if (agent instanceof ChatBridgeSession) { disconnect(); }
+			return;
+		}
+		const folder = vscode.workspace.workspaceFolders?.[0];
+		if (folder) { await ensureAgent(bridge, folder, {}); }
+	};
+	const prompt = async () => {
+		if (connecting || agent?.busy) { throw new Error(t('An agent turn is already running.')); }
+		const folders = vscode.workspace.workspaceFolders ?? [];
+		let bridge = await readChatBridge(vscode.workspace.workspaceFile?.fsPath);
+		if (bridge && !bridge.sessionId) {
+			const choices = bridge.sessions.map(session => ({ label: session.label || t('Conversation'), session }));
+			const selected = choices.length === 1 ? choices[0] : await vscode.window.showQuickPick(choices, { title: t('Conversation'), ignoreFocusOut: true });
+			if (!selected) { return; }
+			bridge = { ...bridge, ...selected.session };
+		}
+		const folder = bridge ? folders[0] : folders.length === 1 ? folders[0] : await vscode.window.showWorkspaceFolderPick();
+		if (!folder) { return; }
+		const text = await vscode.window.showInputBox({ prompt: t('Ask your ACP agent'), ignoreFocusOut: true });
+		if (!text?.trim()) { return; }
+		const config = await readConfig();
+		if (!bridge && !config.agent) { throw new Error(t('Open a chat card in this Space to connect its agent.')); }
+		output.show(true);
+		await ensureAgent(bridge, folder, config);
+		output.appendLine(`\n> ${text}\n`);
+		const result = await agent.prompt(text);
+		output.appendLine(`\n[${result.stopReason}]`);
+	};
+	for (const [id, handler] of Object.entries({ 'sofik.agent.prompt': prompt, 'sofik.agent.cancel': () => agent?.cancel(), 'sofik.agent.disconnect': disconnect, 'sofik.languages.restart': startLanguages })) {
+		context.subscriptions.push(vscode.commands.registerCommand(id, async () => { try { await handler(); } catch (error) { output.appendLine(error.message); output.show(true); } }));
 	}
-	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => { disconnect(); void startLanguages().catch(error => languageOutput.appendLine(error.message)); }));
-	context.subscriptions.push({ dispose: () => { disconnect(); void stopLanguages(); } });
+	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => { if (!(agent instanceof ChatBridgeSession)) { disconnect(); } void startLanguages().catch(error => languageOutput.appendLine(error.message)); }));
+	context.subscriptions.push({ dispose: () => { disposed = true; clearTimeout(refreshTimer); bridgeWatcher?.dispose(); disconnect(); void stopLanguages(); } });
+	void watchChatBridge(vscode.workspace.workspaceFile?.fsPath, refreshBridge, { onError: error => output.appendLine(error.message) }).then(watcher => { if (disposed) { watcher.dispose(); } else { bridgeWatcher = watcher; } });
 	void startLanguages().catch(error => languageOutput.appendLine(error.message));
 }

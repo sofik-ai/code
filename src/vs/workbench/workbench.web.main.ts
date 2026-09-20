@@ -176,7 +176,6 @@ import './contrib/tags/browser/workspaceTagsService.js';
 import './contrib/splash/browser/splash.contribution.js';
 
 // Remote Start Entry for the Web
-import './contrib/remote/browser/remoteStartEntry.contribution.js';
 
 // Process Explorer
 import './contrib/processExplorer/browser/processExplorer.web.contribution.js';

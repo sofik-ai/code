@@ -31,7 +31,6 @@ import { ICommandActionTitle } from '../../../platform/action/common/action.js';
 import { mainWindow } from '../../../base/browser/window.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
 import { TitlebarStyle } from '../../../platform/window/common/window.js';
-import { IPreferencesService } from '../../services/preferences/common/preferences.js';
 import { QuickInputAlignmentContextKey } from '../../../platform/quickinput/browser/quickInput.js';
 import { IEditorGroupsService } from '../../services/editor/common/editorGroupsService.js';
 
@@ -659,48 +658,6 @@ MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
 	order: 11,
 	when: IsSessionsWindowContext.negate()
 });
-
-// --- Configure Tabs Layout
-
-export class ConfigureEditorTabsAction extends Action2 {
-
-	static readonly ID = 'workbench.action.configureEditorTabs';
-
-	constructor() {
-		super({
-			id: ConfigureEditorTabsAction.ID,
-			title: localize2('configureTabs', "Configure Tabs"),
-			category: Categories.View,
-		});
-	}
-
-	run(accessor: ServicesAccessor) {
-		const preferencesService = accessor.get(IPreferencesService);
-		preferencesService.openSettings({ jsonEditor: false, query: 'workbench.editor tab' });
-	}
-}
-registerAction2(ConfigureEditorTabsAction);
-
-// --- Configure Editor
-
-export class ConfigureEditorAction extends Action2 {
-
-	static readonly ID = 'workbench.action.configureEditor';
-
-	constructor() {
-		super({
-			id: ConfigureEditorAction.ID,
-			title: localize2('configureEditors', "Configure Editors"),
-			category: Categories.View,
-		});
-	}
-
-	run(accessor: ServicesAccessor) {
-		const preferencesService = accessor.get(IPreferencesService);
-		preferencesService.openSettings({ jsonEditor: false, query: 'workbench.editor' });
-	}
-}
-registerAction2(ConfigureEditorAction);
 
 // --- Toggle Pinned Tabs On Separate Row
 
