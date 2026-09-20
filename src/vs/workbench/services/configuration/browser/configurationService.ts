@@ -148,6 +148,9 @@ export class WorkspaceService extends Disposable implements IWorkbenchConfigurat
 		this.workspaceConfiguration = this._register(new WorkspaceConfiguration(configurationCache, fileService, uriIdentityService, logService));
 		this._register(this.workspaceConfiguration.onDidUpdateConfiguration(fromCache => {
 			this.onWorkspaceConfigurationChanged(fromCache).then(() => {
+				// A remote multi-root configuration can arrive while createWorkspace
+				// is still awaiting its first read. initialize() completes that path.
+				if (!this.workspace) { return; }
 				this.workspace.initialized = this.workspaceConfiguration.initialized;
 				this.checkAndMarkWorkspaceComplete(fromCache);
 			});

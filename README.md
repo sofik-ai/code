@@ -66,3 +66,9 @@ See [sofik/VALIDATION.md](sofik/VALIDATION.md) for the observed verification and
 ## Licensing
 
 The original Code OSS [MIT license](LICENSE.txt), source copyright notices and [third-party notices](ThirdPartyNotices.txt) are preserved. GitHub themes retain their license. Bundled dependencies retain their own licenses (including the ACP SDK's Apache-2.0 license). Microsoft marketplace/product assets and services are not granted by the Code OSS license.
+
+## Embedded desktop host
+
+`node scripts/sofik/bundle.mjs /absolute/new/output` assembles a self-contained, platform-specific payload with this build's Node binary, native dependencies and license notices. Build it on each target platform. The payload currently uses unminified source output; distribution-size optimization is still possible.
+
+The desktop starts `bin/node scripts/sofik/host.mjs --data-dir <private-state> --token-file <private-token-file>` and keeps stdin open. Stdout emits JSON `{ "event": "ready", "port": ... }`; the host loads `http://127.0.0.1:<port>/?tkn=<token>&workspace=<absolute-workspace-file>`. Do not log the authenticated URL. EOF or a termination signal shuts down the owned process tree. The launcher remembers its loopback port for storage continuity and falls back to a fresh port if occupied. The desktop repository pins an exact commit in `tool/code/runtime.lock.json`.

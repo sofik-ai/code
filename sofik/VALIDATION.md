@@ -23,3 +23,9 @@ Environment: macOS arm64, Node 24.16.0. The inherited `.nvmrc` recommends 24.18.
 - The upstream internal extension host, configuration service and some compatibility services remain necessary for the retained language components. Their optional product screens are excluded; this is not a complete removal of every upstream type or dependency.
 - Development reloads can log canceled file watches, closed IndexedDB writes and upstream lifecycle warnings. A missing JSON schema provider found during validation was fixed by registering schema documents independently from the removed settings UI.
 - The retained accessibility/high-contrast fallback theme assets are still bundled; Sofik's compact preferences offer only GitHub Dark and GitHub Light.
+
+## Desktop integration follow-up
+
+The Sofik Flutter app now embeds this workbench through its CEF surface and a bundled Node runtime. Its isolated full-app fixture verified native typing/save, TypeScript autocomplete, terminal execution, GitHub theme selection, ACP permission rejection and streaming, external LSP suggestions, multi-root folders, Canvas/Code retention and separate Space sessions. No real provider was called. App-side tests exercise authenticated process ownership, stable port/token rotation, occupied-port recovery, disposal during startup and native overlay masks.
+
+This uncovered a missing workspace-trust transition participant after the Extensions UI removal; it is now registered independently so built-in language modules and ACP activate immediately after trust. A multi-root startup race was also fixed: a configuration notification received before workspace creation no longer dereferences an uninitialized workspace.

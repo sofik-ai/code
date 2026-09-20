@@ -16,6 +16,10 @@ import { Disposable } from '../../../../base/common/lifecycle.js';
 import { IFileService } from '../../../../platform/files/common/files.js';
 import { registerWorkbenchContribution2, WorkbenchPhase } from '../../../common/contributions.js';
 import { SettingsFileSystemProvider } from '../../preferences/common/settingsFilesystemProvider.js';
+import { ExtensionEnablementWorkspaceTrustTransitionParticipant } from '../../extensions/browser/extensionEnablementWorkspaceTrustTransitionParticipant.js';
+
+// Built-in language modules and ACP must activate when a user trusts a project.
+registerWorkbenchContribution2('sofik.workspaceTrustLanguages', ExtensionEnablementWorkspaceTrustTransitionParticipant, WorkbenchPhase.AfterRestored);
 
 // JSON language services need schema documents, independently of the settings UI.
 class SofikSchemaDocuments extends Disposable {
