@@ -58,7 +58,7 @@ jobs:
             extensions/*/node_modules
             extensions/*/server/node_modules
       - run: npm run sofik:build
-      - run: node --test --test-reporter=tap --test-concurrency=1 --test-timeout=60000 scripts/sofik/*.test.mjs extensions/sofik-runtime/test/*.test.mjs
+      - run: npm run sofik:test
         timeout-minutes: 5
       - name: Core typecheck
         if: runner.os == 'Linux'

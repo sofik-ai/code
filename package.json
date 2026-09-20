@@ -94,7 +94,7 @@
     "install-latest-component-explorer": "npm install @vscode/component-explorer@next @vscode/component-explorer-cli@next && cd build/rspack && npm install @vscode/component-explorer-webpack-plugin@next @vscode/component-explorer@next && cd ../vite && npm install @vscode/component-explorer-vite-plugin@next @vscode/component-explorer@next",
     "sofik:build": "node scripts/sofik/build.mjs",
     "sofik:serve": "node scripts/sofik/serve.mjs",
-    "sofik:test": "node --test scripts/sofik/*.test.mjs extensions/sofik-runtime/test/*.test.mjs",
+    "sofik:test": "node scripts/sofik/test.mjs",
     "sofik:setup": "node scripts/sofik/setup.mjs",
     "build": "npm run sofik:build",
     "start": "npm run sofik:serve"
