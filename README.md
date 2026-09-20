@@ -90,6 +90,6 @@ asset URL, size and checksum. Publication starts as a draft so consumers never s
 an incomplete public release. Released archives are immutable.
 
 Espacial adopts a release explicitly with `tool/code/pin-release.mjs`; its normal
-build downloads and validates the pinned archive. Since this repository is private,
-Espacial CI needs a separate credential with Contents: read on `sofik-ai/code`.
-Local builds can use the developer's GitHub CLI login.
+build downloads and validates the pinned archive. This repository and its release
+assets are public. Espacial downloads them directly over HTTPS without a GitHub
+CLI login or a repository token.
