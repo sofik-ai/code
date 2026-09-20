@@ -13,7 +13,8 @@ test('native terminal accepts input and reports its exit status', { timeout: 300
 	// Keep the child alive until the parent has actually received its output.
 	// A one-shot process can exit before ConPTY delivers its first screen update.
 	const script = `process.stdin.setRawMode(true); process.stdin.on('data', data => { if (data.includes(113)) process.exit(0); else console.log('sofik-terminal-ok'); }); console.log('sofik-terminal-ready');`;
-	const terminal = pty.spawn(process.execPath, ['-e', script], { name: 'xterm-256color', cols: 100, rows: 24, cwd: os.tmpdir(), env: process.env });
+	const terminal = pty.spawn(process.execPath, ['-e', script], { name: 'xterm-256color', cols: 100, rows: 24, cwd: os.tmpdir(), env: process.env, useConptyDll: process.platform === 'win32' });
+	// Match terminal.integrated.windowsUseConptyDll, including the shipped DLL.
 	// ConPTY keeps a worker alive after shell exit until the terminal is disposed.
 	t.after(() => { try { terminal.kill(); } catch (error) { if (error.code !== 'ESRCH') { throw error; } } });
 	let output = '', sentInput = false, sentExit = false;
