@@ -21,4 +21,8 @@ await run(install, 'extensions/sofik-runtime');
 // The embedding server uses Node, not Electron. Compile its native modules for this ABI.
 await run(['rebuild', '@vscode/spdlog', '@vscode/sqlite3', '@vscode/native-watchdog', '@vscode/fs-copyfile', 'node-pty', '--runtime=node', `--target=${process.versions.node}`, '--dist-url=https://nodejs.org/download/release', '--build-from-source'], '', { ...process.env, CXXFLAGS: `${process.env.CXXFLAGS ?? ''} -std=c++20`.trim(), npm_config_force_process_config: 'true' });
 await run(['rebuild', '@vscode/fs-copyfile', '--runtime=node', `--target=${process.versions.node}`, '--dist-url=https://nodejs.org/download/release', '--build-from-source'], 'extensions/git', { ...process.env, CXXFLAGS: '-std=c++20', npm_config_force_process_config: 'true' });
+if (process.platform === 'win32') {
+	// These addons have no prebuilt fallback; the server and terminal load them on Windows.
+	await run(['rebuild', '@vscode/windows-registry', '@vscode/windows-process-tree', '@vscode/windows-ca-certs', '--runtime=node', `--target=${process.versions.node}`, '--dist-url=https://nodejs.org/download/release', '--build-from-source'], '', { ...process.env, npm_config_force_process_config: 'true' });
+}
 console.log('Setup complete. Run npm run sofik:build.');

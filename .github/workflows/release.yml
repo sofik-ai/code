@@ -35,7 +35,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential python3 pkg-config libx11-dev libxkbfile-dev libsecret-1-dev libkrb5-dev
       - run: npm run sofik:setup
       - run: npm run sofik:build
-      - run: npm run sofik:test
+      - run: node --test --test-reporter=tap --test-timeout=60000 scripts/sofik/*.test.mjs extensions/sofik-runtime/test/*.test.mjs
+        timeout-minutes: 5
       - name: Core typecheck
         if: runner.os == 'Linux'
         run: |
@@ -43,6 +44,7 @@ jobs:
           node node_modules/@typescript/native/lib/tsc.js -p src/tsconfig.json --noEmit --skipLibCheck
       - run: node scripts/sofik/bundle.mjs
       - name: Test the self-contained package
+        timeout-minutes: 5
         run: |
           node scripts/sofik/smoke-bundle.mjs .build/desktop-runtime
       - run: node scripts/sofik/package-release.mjs
@@ -54,6 +56,7 @@ jobs:
           retention-days: 3
   release:
     needs: build
+    timeout-minutes: 15
     runs-on: ubuntu-24.04
     permissions:
       contents: write

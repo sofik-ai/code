@@ -29,7 +29,7 @@ test('desktop ACP loads the card conversation and sends provider metadata withou
 	assert.equal(requests.find(r => r.method === 'session/load').params.sessionId, 'card-conversation');
 	assert.equal(requests.find(r => r.method === 'session/load').params.cwd, '/fixture/worktree');
 	const prompt = requests.find(r => r.method === 'session/prompt');
-	assert.deepEqual(session.sourceFolders, ['/fixture/worktree', '/fixture/docs']);
+	assert.deepEqual(session.sourceFolders, [path.resolve('/fixture/worktree'), path.resolve('/fixture/docs')]);
 	assert.equal(prompt.params._meta.sofik.providerId, 'fixture');
 	assert.equal(prompt.params._meta.sofik.modelId, 'test-model');
 	assert.equal(typeof prompt.params._meta.sofik.clientMessageId, 'string');

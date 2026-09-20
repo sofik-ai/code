@@ -28,7 +28,7 @@ npm run sofik:serve -- --folder /absolute/path/to/project
 
 The server binds only to `127.0.0.1`. The launcher creates a local connection-token file with owner-only permissions, reports its path, and redacts token-bearing URLs from its output. The embedding host reads that file and opens the editor with the `tkn` query parameter; the server exchanges it for a session cookie. Optional launcher arguments: `--port`, `--data-dir`, `--token-file`. Never expose this process directly to a network.
 
-The executable target is the Node server plus browser workbench, embedded by the CEF surface in Sofik. The desktop integration lives in `espacial-app`. Release optimization, signing and native installers remain separate delivery work.
+The executable target is the Node server plus browser workbench, embedded by the CEF surface in Sofik. The desktop integration lives in `espacial-app`. Desktop runtime releases are built by GitHub Actions; application signing and native installers remain in the desktop repository.
 
 ## Agents and language servers
 
@@ -74,3 +74,22 @@ The original Code OSS [MIT license](LICENSE.txt), source copyright notices and [
 `node scripts/sofik/bundle.mjs /absolute/new/output` assembles a self-contained, platform-specific payload with this build's Node binary, native dependencies and license notices. Build it on each target platform. The payload currently uses unminified source output; distribution-size optimization is still possible.
 
 The desktop starts `bin/node scripts/sofik/host.mjs --data-dir <private-state> --token-file <private-token-file>` and keeps stdin open. Stdout emits JSON `{ "event": "ready", "port": ... }`; the host loads `http://127.0.0.1:<port>/?tkn=<token>&workspace=<absolute-workspace-file>`. Do not log the authenticated URL. EOF or a termination signal shuts down the owned process tree. The launcher remembers its loopback port for storage continuity and falls back to a fresh port if occupied. The desktop repository pins an exact commit in `tool/code/runtime.lock.json`.
+
+## Release pipeline
+
+Pushes to `main` and manual runs of `Release desktop runtime` build macOS arm64,
+Linux x64 and Windows x64 on native GitHub runners using Node 24.16.0. Each job runs
+the local fixture suite, bundles Node and native dependencies, then tests terminal,
+LSP completion and server authentication using only the packaged files. Linux also
+checks the core TypeScript project.
+
+Only after every platform passes does the workflow publish
+`v1.138.0-sofik.<run-number>`. Each release includes `sofik-code-<platform>-<arch>.tar.gz`,
+its SHA-256 file and `artifacts.json` containing the exact source commit, target,
+asset URL, size and checksum. Publication starts as a draft so consumers never see
+an incomplete public release. Released archives are immutable.
+
+Espacial adopts a release explicitly with `tool/code/pin-release.mjs`; its normal
+build downloads and validates the pinned archive. Since this repository is private,
+Espacial CI needs a separate credential with Contents: read on `sofik-ai/code`.
+Local builds can use the developer's GitHub CLI login.

@@ -1,8 +1,9 @@
 /* Copyright (c) Microsoft Corporation. Licensed under the MIT License. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
+import { stripVTControlCharacters } from 'node:util';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -13,7 +14,7 @@ test('native terminal runs a command and reports its exit status', { timeout: 10
 	const terminal = pty.spawn(process.execPath, ['-e', 'console.log("sofik-terminal-ok")'], { name: 'xterm-256color', cols: 80, rows: 24, cwd: os.tmpdir(), env: process.env });
 	let output = '';
 	const result = await new Promise(resolve => { terminal.onData(data => { output += data; }); terminal.onExit(resolve); });
-	assert.deepEqual({ output: output.trim(), code: result.exitCode }, { output: 'sofik-terminal-ok', code: 0 });
+	assert.deepEqual({ output: stripVTControlCharacters(output).trim(), code: result.exitCode }, { output: 'sofik-terminal-ok', code: 0 });
 });
 
 test('bundled JSON LSP provides schema autocomplete over stdio', { timeout: 10000 }, async t => {
@@ -37,13 +38,29 @@ test('local server requires its connection token', { timeout: 20000 }, async t =
 	const tokenFile = path.join(directory, 'token');
 	await writeFile(tokenFile, 'sofik-test-only-token', { mode: 0o600 });
 	const child = spawn(process.execPath, ['out/server-main.js', '--host', '127.0.0.1', '--port', '0', '--connection-token-file', tokenFile, '--server-data-dir', directory, '--accept-server-license-terms'], { env: { ...process.env, VSCODE_DEV: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
-	t.after(async () => { child.kill(); if (child.exitCode === null && child.signalCode === null) { await once(child, 'exit'); } await rm(directory, { recursive: true, force: true }); });
+	t.after(async () => {
+		if (child.exitCode === null && child.signalCode === null) {
+			const exited = once(child, 'exit');
+			if (process.platform === 'win32') { spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' }); }
+			else { child.kill(); }
+			await exited;
+		}
+		await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+	});
+	let diagnostics = '';
+	for (const stream of [child.stdout, child.stderr]) { stream.on('data', data => { diagnostics = (diagnostics + data).slice(-16000); }); }
 	const port = await new Promise((resolve, reject) => {
 		let buffer = '';
 		child.stdout.on('data', data => { buffer += data; const match = buffer.match(/Server bound to 127\.0\.0\.1:(\d+)/); if (match) { resolve(match[1]); } });
 		child.once('error', reject); child.once('exit', code => reject(new Error(`Server exited ${code}`)));
 	});
-	const denied = await fetch(`http://127.0.0.1:${port}/`);
-	const allowed = await fetch(`http://127.0.0.1:${port}/?tkn=sofik-test-only-token`, { redirect: 'manual' });
+	const request = async (url, options) => {
+		try { return await fetch(url, { ...options, signal: AbortSignal.timeout(10000) }); }
+		catch (error) { throw new Error(`Server request failed: ${error.cause?.message ?? error.message}\n${diagnostics}`, { cause: error }); }
+	};
+	const denied = await request(`http://127.0.0.1:${port}/`);
+	await denied.text();
+	const allowed = await request(`http://127.0.0.1:${port}/?tkn=sofik-test-only-token`, { redirect: 'manual' });
+	await allowed.text();
 	assert.deepEqual({ denied: denied.status, allowed: allowed.status, cookie: Boolean(allowed.headers.get('set-cookie')) }, { denied: 403, allowed: 302, cookie: true });
 });
