@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-const root = fileURLToPath(new URL('../../', import.meta.url));
+const root = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const target = path.resolve(process.argv[2] ?? path.join(root, '.build/desktop-runtime'));
 if (target === path.resolve(root) || root.startsWith(target + path.sep) || (target.startsWith(root) && !target.startsWith(path.join(root, '.build') + path.sep))) { throw new Error('Output must not contain the source tree.'); }
 if (existsSync(target)) { throw new Error('Output already exists; choose a fresh staging directory.'); }

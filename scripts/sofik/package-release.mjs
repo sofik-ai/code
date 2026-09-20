@@ -11,7 +11,8 @@ if (payload.platform !== process.platform || payload.arch !== process.arch) thro
 await fs.mkdir(output, { recursive: true });
 const target = `${payload.platform}-${payload.arch}`;
 const filename = `sofik-code-${target}.tar.gz`;
-execFileSync('tar', ['-czf', path.join(output, filename), '-C', bundle, '.'], { stdio: 'inherit' });
+const tar = process.platform === 'win32' ? path.join(process.env.SystemRoot, 'System32', 'tar.exe') : 'tar';
+execFileSync(tar, ['-czf', filename, '-C', bundle, '.'], { cwd: output, stdio: 'inherit' });
 const hash = createHash('sha256');
 for await (const chunk of createReadStream(path.join(output, filename))) hash.update(chunk);
 const sha256 = hash.digest('hex');
