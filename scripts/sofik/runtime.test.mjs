@@ -3,18 +3,21 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
-import { stripVTControlCharacters } from 'node:util';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createMessageConnection, StreamMessageReader, StreamMessageWriter } from '../../extensions/sofik-runtime/node_modules/vscode-jsonrpc/node.js';
 import pty from 'node-pty';
 
-test('native terminal runs a command and reports its exit status', { timeout: 10000 }, async () => {
+test('native terminal runs a command and reports its exit status', { timeout: 10000 }, async t => {
 	const terminal = pty.spawn(process.execPath, ['-e', 'console.log("sofik-terminal-ok")'], { name: 'xterm-256color', cols: 80, rows: 24, cwd: os.tmpdir(), env: process.env });
+	// ConPTY keeps a worker alive after shell exit until the terminal is disposed.
+	t.after(() => { try { terminal.kill(); } catch (error) { if (error.code !== 'ESRCH') { throw error; } } });
 	let output = '';
 	const result = await new Promise(resolve => { terminal.onData(data => { output += data; }); terminal.onExit(resolve); });
-	assert.deepEqual({ output: stripVTControlCharacters(output).trim(), code: result.exitCode }, { output: 'sofik-terminal-ok', code: 0 });
+	// Windows also emits OSC window-title and cursor-control sequences.
+	assert.match(output, /sofik-terminal-ok/);
+	assert.equal(result.exitCode, 0);
 });
 
 test('bundled JSON LSP provides schema autocomplete over stdio', { timeout: 10000 }, async t => {
