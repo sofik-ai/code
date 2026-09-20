@@ -1,0 +1,20 @@
+/* Copyright (c) Sofik AI. Licensed under the MIT License. */
+import fs from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+const bundle = path.resolve(process.argv[2] ?? '.build/desktop-runtime');
+const output = path.resolve(process.argv[3] ?? '.build/release');
+const payload = JSON.parse(await fs.readFile(path.join(bundle, 'sofik-runtime.json'), 'utf8'));
+if (payload.platform !== process.platform || payload.arch !== process.arch) throw new Error('Package on the target platform.');
+await fs.mkdir(output, { recursive: true });
+const target = `${payload.platform}-${payload.arch}`;
+const filename = `sofik-code-${target}.tar.gz`;
+execFileSync('tar', ['-czf', path.join(output, filename), '-C', bundle, '.'], { stdio: 'inherit' });
+const hash = createHash('sha256');
+for await (const chunk of createReadStream(path.join(output, filename))) hash.update(chunk);
+const sha256 = hash.digest('hex');
+await fs.writeFile(path.join(output, `${filename}.sha256`), `${sha256}  ${filename}\n`);
+await fs.writeFile(path.join(output, `artifact-${target}.json`), JSON.stringify({ ...payload, target, filename, sha256, size: (await fs.stat(path.join(output, filename))).size }, null, 2) + '\n');
+console.log(`${filename}: ${sha256}`);

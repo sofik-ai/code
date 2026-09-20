@@ -1,0 +1,73 @@
+name: Release desktop runtime
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: code-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: darwin-arm64
+          - runner: ubuntu-24.04
+            target: linux-x64
+          - runner: windows-2025
+            target: win32-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.16.0
+      - name: Linux native build prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3 pkg-config libx11-dev libxkbfile-dev libsecret-1-dev libkrb5-dev
+      - run: npm run sofik:setup
+      - run: npm run sofik:build
+      - run: npm run sofik:test
+      - name: Core typecheck
+        if: runner.os == 'Linux'
+        run: |
+          node build/npm/electronTypes.ts
+          node node_modules/@typescript/native/lib/tsc.js -p src/tsconfig.json --noEmit --skipLibCheck
+      - run: node scripts/sofik/bundle.mjs
+      - name: Test the self-contained package
+        run: |
+          node scripts/sofik/smoke-bundle.mjs .build/desktop-runtime
+      - run: node scripts/sofik/package-release.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: code-${{ matrix.target }}
+          path: .build/release/*
+          compression-level: 0
+          retention-days: 3
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.16.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: code-*
+          path: release
+          merge-multiple: true
+      - name: Publish complete immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/sofik/publish-release.mjs release
