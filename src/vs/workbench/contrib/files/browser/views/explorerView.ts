@@ -209,6 +209,7 @@ export class ExplorerView extends ViewPane implements IExplorerView {
 	private _autoReveal: boolean | 'force' | 'focusNoScroll' = false;
 	private readonly delegate: IExplorerViewContainerDelegate | undefined;
 	private workspaceTitleContainer: HTMLElement | undefined;
+	private clipboardCheckGeneration = 0;
 
 	override get singleViewPaneContainerTitle(): string {
 		return this.name;
@@ -692,7 +693,7 @@ export class ExplorerView extends ViewPane implements IExplorerView {
 		}
 	}
 
-	private async onContextMenu(e: ITreeContextMenuEvent<ExplorerItem>): Promise<void> {
+	private onContextMenu(e: ITreeContextMenuEvent<ExplorerItem>): void {
 		if (DOM.isEditableElement(e.browserEvent.target as HTMLElement)) {
 			return;
 		}
@@ -716,7 +717,6 @@ export class ExplorerView extends ViewPane implements IExplorerView {
 		}
 
 		// update dynamic contexts
-		this.fileCopiedContextKey.set(await this.clipboardService.hasResources());
 		this.setContextKeys(stat);
 
 		const selection = this.tree.getSelection();
@@ -744,6 +744,15 @@ export class ExplorerView extends ViewPane implements IExplorerView {
 				? selection.map((fs: ExplorerItem) => fs.resource)
 				: stat instanceof ExplorerItem ? [stat.resource] : []
 		});
+		// Reading the browser clipboard can wait for a permission response. The
+		// context menu must be shown during the contextmenu event itself; otherwise
+		// the first right click can be consumed without opening it.
+		const clipboardCheckGeneration = ++this.clipboardCheckGeneration;
+		void this.clipboardService.hasResources().then(hasResources => {
+			if (clipboardCheckGeneration === this.clipboardCheckGeneration) {
+				this.fileCopiedContextKey.set(hasResources);
+			}
+		}, () => { /* Keep the last known clipboard state if access fails. */ });
 	}
 
 	private onFocusChanged(elements: readonly ExplorerItem[]): void {
@@ -966,6 +975,7 @@ export class ExplorerView extends ViewPane implements IExplorerView {
 	}
 
 	itemsCopied(stats: ExplorerItem[], cut: boolean, previousCut: ExplorerItem[] | undefined): void {
+		this.clipboardCheckGeneration++;
 		this.fileCopiedContextKey.set(stats.length > 0);
 		this.resourceCutContextKey.set(cut && stats.length > 0);
 		previousCut?.forEach(item => this.tree.rerender(item));
