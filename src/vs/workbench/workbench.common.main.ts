@@ -394,6 +394,7 @@ import './contrib/languageStatus/browser/languageStatus.contribution.js';
 import './contrib/codeActions/browser/codeActions.contribution.js';
 
 // Local History
+import './contrib/timeline/browser/timeline.service.contribution.js';
 import './contrib/localHistory/browser/localHistory.contribution.js';
 
 // Workspace
